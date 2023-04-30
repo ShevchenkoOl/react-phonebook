@@ -1,56 +1,46 @@
+import ContactItem from 'components/ContactItem';
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { contactsOperations, contactsSelectors } from '../../redux/contacts';
-import { motion, AnimatePresence } from 'framer-motion';
-//import { variants } from '../../utils/motionVar';
-import ErrorView from '../ErrorView';
-import { List, Item, Button } from './ContactList.styled';
+import Loader from 'components/Loader';
+import { List, Error } from './ContactList.styled';
+import { useSelector} from 'react-redux';
+import { useFetchContactsQuery} from 'redux/contacts/contactsApi';
+import { getFilter } from 'redux/contacts/contactsSelectors';
 
-function ContactList() {
-  const dispatch = useDispatch();
-  const visibleContacts = useSelector(contactsSelectors.getVisibleContacts);
-  const contacts = useSelector(contactsSelectors.getContacts);
-  const isLoading = useSelector(contactsSelectors.getLoading);
-  const error = useSelector(contactsSelectors.getError);
+const ContactList = () => {
+  const { data: contacts, error, isLoading } = useFetchContactsQuery();
+
+  const filter = useSelector(getFilter);
+
+  const filterContacts = () => {
+    return (
+      contacts &&
+      contacts.filter(contact =>
+        contact.name.toLowerCase().includes(filter.toLowerCase())
+      )
+    );
+  };
+
+  const contactList = filterContacts();
+  const renderContacts = contacts && contactList.length > 0;
+ 
+
 
   return (
     <>
-      {contacts.length > 0 && !error && (
-        <List>
-          <AnimatePresence>
-            {visibleContacts.map(({ id, name, number }) => (
-              <Item key={id}>
-                <p>
-                  {name}: {number}
-                </p>
-                <Button
-                  type="button"
-                  onClick={() => dispatch(contactsOperations.deleteContact(id))}
-                >
-                  Delete
-                </Button>
-              </Item>
-            ))}
-          </AnimatePresence>
-        </List>
+      <List>
+      {renderContacts &&
+        contactList.map(({ id, name, number }) => (
+          <ContactItem id={id} key={id} name={name} number={number} />
+        ))}
+      {isLoading && <Loader />}
+      {error && (
+        <Error>Try adding phone details or contact your administrator</Error>
       )}
-      {!contacts.length && !error && !isLoading && (
-        <AnimatePresence>
-          <motion.p
-            initial="initial"
-            animate="animate"
-            exit="exit"
-            transition="transition"
-            //variants={variants}
-          >
-            Your phonebook is empty. Please add contact.
-          </motion.p>
-        </AnimatePresence>
-      )}
-
-      {error && <ErrorView message={error.message} />}
+    </List>
+      
+  
     </>
   );
-}
+};
 
 export default ContactList;

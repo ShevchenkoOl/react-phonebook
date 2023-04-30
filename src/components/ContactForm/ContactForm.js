@@ -1,103 +1,95 @@
 import { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { contactsOperations, contactsSelectors } from '../../redux/contacts'
-import { Button, Input, Label, Sector, Title } from './ContactForm.styled';
+import { Label, Input, Button, Title, Sector } from './ContactForm.styled';
+import toast, { Toaster } from 'react-hot-toast';
+import { nanoid } from 'nanoid'
+import { useFetchContactsQuery, useCreateContactMutation } from 'redux/contacts/contactsApi';
+import Loader from 'components/Loader';
 
-function ContactForm() {
-  const dispatch = useDispatch();
-  const contacts = useSelector(contactsSelectors.getContacts);
+function ContactForm  () { 
   const [name, setName] = useState('');
   const [number, setNumber] = useState('');
+  const { data: contacts, isLoading } = useFetchContactsQuery();
+  const [createContact] = useCreateContactMutation();
 
-  const handleChange = event => {
-    const { name, value } = event.target;
 
+  const handleChange = e => {
+    const { name, value } = e.currentTarget;
+    
     switch (name) {
-      case 'name':
-        setName(value);
+      case 'name': setName(value);
         break;
-
-      case 'number':
-        setNumber(value);
+      case 'number': setNumber(value);
         break;
-
-      default:
-        return;
+      default: return;
     }
   };
-  const checkRepeatName = name => {
-    return contacts.find(
-      contact => contact.name.toLowerCase() === name.toLowerCase(),
-    );
-  };
 
-  const checkRepeatNumber = number => {
-    return contacts.find(contact => contact.number === number);
-  };
+  const addContact = data => {
+    const contactName = contacts.map(contact => contact.name.toLowerCase());
+    const isAdding = contactName.includes(data.name.toLowerCase());
 
-  const checkEmptyQuery = (name, number) => {
-    return name.trim() === '' || number.trim() === '';
-  };
-
-  const checkValidNumber = number => {
-    return !/\d{3}[-]\d{2}[-]\d{2}/g.test(number);
-  };
-
-  const handleSubmit = e => {
-    e.preventDefault();
-    if (checkRepeatName(name)) {
-      alert(`${name} is already in contacts.`);
-    } else if (checkRepeatNumber(number)) {
-      alert(`${name} is already in contacts.`);
-    } else if (checkEmptyQuery(name, number)) {
-      alert("Enter the contact's name and number phone!");
-    } else if (checkValidNumber(number)) {
-      alert('Enter the correct number phone!');
+    if (!isAdding) {
+      createContact(data);
+      reset();
+      toast.success(`Contact, ${name} successfully added`);
     } else {
-      dispatch(contactsOperations.addContact(name, number));
+      toast.error(`${data.name} is already in contacts.`);
     }
-    resetInput();
   };
 
-  const resetInput = () => {
+    const handleSubmit = e => {
+   e.preventDefault();
+
+    const newContact = {
+      id: nanoid(),
+      name,
+      number,
+    };
+
+    addContact(newContact);
+  };
+
+   const reset = () => {
     setName('');
     setNumber('');
   };
 
-  return (
-    <>
-      <Title>
+    return (
+      <form onSubmit={handleSubmit} autoComplete='off'>
+        <Title>
         Phonebook
         <Sector>
-          <form onSubmit={handleSubmit}>
-            <Label>
-              Name
-              <Input
-                type="text"
-                name="name"
-                id="name"
-                value={name}
-                onChange={handleChange}
-                placeholder="Ivan Ivanov"
-              />
-            </Label>
-            <Label>
-              Number
-              <Input
-                type="tel"
-                name="number"
-                id="number"
-                value={number}
-                onChange={handleChange}
-                placeholder="123-45-67"
-              />
-            </Label>
-           <Button value="Submit">Add contact</Button>
-          </form>
+          <Label>
+          Name
+          <Input
+            type="text"
+            id="name"
+            name="name"
+            value={name}
+            onChange={handleChange}
+            placeholder="Ivan Ivanov"
+          />
+        </Label>
+
+        <Label>
+          Number
+          <Input
+            type="tel"
+            id="number"
+            name="number"
+            value={number}
+            onChange={handleChange}
+            placeholder="123-45-78"          
+          />
+        </Label>
+        <Button type="submit" >Add contact</Button>
+        <Toaster />
+        {isLoading && <Loader />}
         </Sector>
-      </Title>
-    </>
-  );
-}
+        </Title>
+      </form>
+    );
+
+};
 
 export default ContactForm;
