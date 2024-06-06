@@ -30,7 +30,7 @@ function PageRegistration() {
           <PageRegistrationInput
             type="text"
             name="name"
-            pattern="^[a-zA-Zа-яА-Я]+(([' -][a-zA-Zа-яА-Я ])?[a-zA-Zа-яА-Я]*)*$"
+            pattern="^[a-zA-Zа-яА-Я]+([-' ][a-zA-Zа-яА-Я ])*$"
             title="Name may contain only letters, apostrophe, dash and spaces."
             placeholder="Example John"
             required
@@ -43,7 +43,7 @@ function PageRegistration() {
           <PageRegistrationInput
             type="email"
             name="email"
-            pattern="([A-z0-9_.-]{1,})@([A-z0-9_.-]{1,}).([A-z]{2,8})"
+            pattern="([A-Za-z0-9_.-]+)@([A-Za-z0-9_.-]+)\\.([A-Za-z]{2,8})"
             title="Enter your email"
             placeholder="Example user@mail.com"
             required
